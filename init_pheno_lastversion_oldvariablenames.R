@@ -18,7 +18,7 @@ exec_from_uzh  <-  TRUE
 if(exec_from_uzh){
   
   # in home 
-
+  
   wave5 <- read.xport("/Volumes/Data/Addhealth/Addhealthdata/wave5/SurveyData/wave5_s1.xpt") %>% as_tibble
   
   # other
@@ -29,7 +29,7 @@ if(exec_from_uzh){
   wave2_friends<-read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/Friend Files/Wave II In-Home Nominations/hfriend2.xpt") %>% as_tibble
   aD<-readRDS("/Volumes/share/data/aD.rds")%>% as_tibble
   PGS=read.xport("/Volumes/Data/addhealth/addhealthdata/wave5/wave5_pgs_and_parental/Genetic Files/Polygenic Scores/PGS_AH1.xpt")%>% as_tibble
-   obesityclass=readRDS("/Volumes/share/data/obesityclass.rds")
+  obesityclass=readRDS("/Volumes/share/data/obesityclass.rds")
   # blood 
   w5AID <- wave5$AID
   
@@ -599,7 +599,7 @@ waves =
 
 waves_cecilia  = 
   waves_full %>% 
-  select(AID, H1GH59A, H1GH59B, H1GH60, H2WS16W, H2WS16W, H2WS16HF, 
+  select(AID, H1GH59A, H1GH59B, H1GH60, H2WS16W, H2WS16HF, 
          H2WS16HI, H3WGT, H3HGT_F, H3HGT_I, H4BMI, H5ID3, H5ID2F, H5ID2I, H5ID6D, H5ID6E, PC19A_P, PC19B_O)  %>% 
   #handling missing data 
   replace_with_na_at(.vars = c("H1GH59A","H1GH59B", "H3HGT_F","H3HGT_I", "H2WS16HF", "H2WS16HI", "PC19A_P", "PC19B_O"),
@@ -631,7 +631,7 @@ waves_cecilia  =
     diabetes = H5ID6D,
     heartatk = H5ID6E
   ) 
- 
+
 
 # adding to the dataset
 waves = waves %>% 
@@ -644,55 +644,55 @@ waves = waves %>%
 
 #calc_age is a function to calculate the age based on the date of birth and the given reference date
 calc_age <- function(birthDate, refDate) {
-    period <- as.period(interval(birthDate, refDate), unit="years")
-    period$year
+  period <- as.period(interval(birthDate, refDate), unit="years")
+  period$year
 }
 
 waves_wenjia =
-waves_full%>%
-select(AID, H1GI1Y, H1GI1M, H2GI1Y, H2GI1M, H3OD1Y, H3OD1M, H4OD1Y, H4OD1M, H5OD1Y, H5OD1M,
-IYEAR, IMONTH, IYEAR2, IMONTH2, IYEAR3, IMONTH3, IYEAR4, IMONTH4, IYEAR5, IMONTH5,
-H1GI4, H3OD2, H5OD4C, H1GI6A, H3OD4A, H5OD4A, H1GI6B, H3OD4B, H5OD4B, H1GI6D,H3OD4D,
-H5OD4D, H1GI9, H3IR4,H4IR4)%>%
-#set birth month and year to na when the response refused to provide
-replace_with_na_at(c("H1GI1Y", "H1GI1M","H2GI1Y","H2GI1M"), ~.x%in% c("96", "98"))%>%
-replace_with_na_at(.vars = c("H1GI4","H3OD2","H5OD4C","H1GI6A", "H3OD4A","H5OD4A", "H1GI6B", "H3OD4B","H5OD4B",
-"H1GI6D","H3OD4D", "H5OD4D","H1GI9"), condition = ~.x %in% c(5, 6, 8, 9, 12, 13))%>%
-#replace na value in wave 1 with information in w2 or w3 w4 or w5
-mutate(BirthY=coalesce(as.integer(H1GI1Y),as.integer(H2GI1Y),as.integer(H3OD1Y),as.integer(H4OD1Y),as.integer(H5OD1Y)),
-BirthM=coalesce(as.integer(H1GI1M),as.integer(H2GI1M),as.integer(H3OD1M),as.integer(H4OD1M),as.integer(H5OD1M)),
-# reformate the time for conducting each wave xxxx-xx-xx(y-m-d)
-date_w1=paste(IYEAR, IMONTH,"1", sep = "-"),
-date_w2=paste(IYEAR2, IMONTH2,"1", sep = "-"),
-date_w3=paste(IYEAR3, IMONTH3,"1", sep = "-"),
-date_w4=paste(IYEAR4, IMONTH4,"1", sep = "-"),
-date_w5=paste(IYEAR5, IMONTH5,"1", sep = "-"),
-dob=paste (BirthY, BirthM, "1", sep = "-"),
-age_w1=calc_age(dob,date_w1),
-age_w2=calc_age(dob,date_w2),
-age_w3=calc_age(dob,date_w3),
-age_w4=calc_age(dob,date_w4),
-age_w5=calc_age(dob,date_w5),
-nh=coalesce(H1GI4,H3OD2, H5OD4C),
-rw=coalesce(H1GI6A, H3OD4A, H5OD4A, H1GI9, H3IR4, H4IR4),
-rb=coalesce(H1GI6B, H3OD4B, H5OD4B, H1GI9, H3IR4, H4IR4),
-ra=coalesce(H1GI6D, H3OD4D, H5OD4D, H1GI9, H3IR4, H4IR4),
-#creat variable re to reprsent the 5 combinations of race and enthnicity
-re=case_when(nh==0 & rw==1~1, #white nonhispanic
-nh==0 & (rb==1|rb==2)  ~2, # black nonhispanic
-nh==0 & (ra==1|ra==4) ~3, #asian nonhispanic
-nh==0 & rw!=1 & rb!=1 & rb!=2 & ra!=4 & ra!=1 ~4, #other nonhispanic
-nh==1 ~5))%>% #hispanic
-left_join(aD[,c("AID","Plate","AvgCorrelogram100")])%>%
-dummy_cols(select_columns =c( "re", "Plate"))%>%
-left_join(PGS[,c("AID", "PGSBMI")], by="AID")
+  waves_full%>%
+  select(AID, H1GI1Y, H1GI1M, H2GI1Y, H2GI1M, H3OD1Y, H3OD1M, H4OD1Y, H4OD1M, H5OD1Y, H5OD1M,
+         IYEAR, IMONTH, IYEAR2, IMONTH2, IYEAR3, IMONTH3, IYEAR4, IMONTH4, IYEAR5, IMONTH5,
+         H1GI4, H3OD2, H5OD4C, H1GI6A, H3OD4A, H5OD4A, H1GI6B, H3OD4B, H5OD4B, H1GI6D,H3OD4D,
+         H5OD4D, H1GI9, H3IR4,H4IR4)%>%
+  #set birth month and year to na when the response refused to provide
+  replace_with_na_at(c("H1GI1Y", "H1GI1M","H2GI1Y","H2GI1M"), ~.x%in% c("96", "98"))%>%
+  replace_with_na_at(.vars = c("H1GI4","H3OD2","H5OD4C","H1GI6A", "H3OD4A","H5OD4A", "H1GI6B", "H3OD4B","H5OD4B",
+                               "H1GI6D","H3OD4D", "H5OD4D","H1GI9"), condition = ~.x %in% c(5, 6, 8, 9, 12, 13))%>%
+  #replace na value in wave 1 with information in w2 or w3 w4 or w5
+  mutate(BirthY=coalesce(as.integer(H1GI1Y),as.integer(H2GI1Y),as.integer(H3OD1Y),as.integer(H4OD1Y),as.integer(H5OD1Y)),
+         BirthM=coalesce(as.integer(H1GI1M),as.integer(H2GI1M),as.integer(H3OD1M),as.integer(H4OD1M),as.integer(H5OD1M)),
+         # reformate the time for conducting each wave xxxx-xx-xx(y-m-d)
+         date_w1=paste(IYEAR, IMONTH,"1", sep = "-"),
+         date_w2=paste(IYEAR2, IMONTH2,"1", sep = "-"),
+         date_w3=paste(IYEAR3, IMONTH3,"1", sep = "-"),
+         date_w4=paste(IYEAR4, IMONTH4,"1", sep = "-"),
+         date_w5=paste(IYEAR5, IMONTH5,"1", sep = "-"),
+         dob=paste (BirthY, BirthM, "1", sep = "-"),
+         age_w1=calc_age(dob,date_w1),
+         age_w2=calc_age(dob,date_w2),
+         age_w3=calc_age(dob,date_w3),
+         age_w4=calc_age(dob,date_w4),
+         age_w5=calc_age(dob,date_w5),
+         nh=coalesce(H1GI4,H3OD2, H5OD4C),#0:nonhispanic 1:hispanic
+         rw=coalesce(H1GI6A, H3OD4A, H5OD4A, H1GI9, H3IR4, H4IR4), # white 1
+         rb=coalesce(H1GI6B, H3OD4B, H5OD4B, H1GI9, H3IR4, H4IR4), # black: 1 or 2
+         ra=coalesce(H1GI6D, H3OD4D, H5OD4D, H1GI9, H3IR4, H4IR4), # asian: 1 or 4
+         #create variable re to reprsent the 5 combinations of race and enthnicity
+         re=case_when(nh==0 & rw==1~1, #white nonhispanic
+                      nh==0 & (rb==1|rb==2)  ~2, # black nonhispanic
+                      nh==0 & (ra==1|ra==4) ~3, #asian nonhispanic
+                      nh==0 & rw!=1 & rb!=1 & rb!=2 & ra!=4 & ra!=1 ~4, #other nonhispanic
+                      nh==1 ~5))%>% #hispanic
+  left_join(aD[,c("AID","Plate","AvgCorrelogram100")])%>%
+  dummy_cols(select_columns =c( "re", "Plate"))%>%
+  left_join(PGS[,c("AID", "PGSBMI")], by="AID")
 
 
 #combine friends information from wave 1 and wave 2
 friends=left_join(wave1_friends,wave2_friends,by="AID")%>%
-mutate_at(vars(-AID),funs(.%>%as.character%>%as.numeric))%>%
-replace_with_na_all(~.x %in% c(99999999, 88888888, 77777777, 55555555))%>%
-select(-DAT)
+  mutate_at(vars(-AID),funs(.%>%as.character%>%as.numeric))%>%
+  replace_with_na_all(~.x %in% c(99999999, 88888888, 77777777, 55555555))%>%
+  select(-DAT)
 
 #calculate the number of friends for each reponse(attention "" is counted in when data type is character)
 
@@ -704,31 +704,31 @@ friends[]=t(apply(friends, 1, function(x) replace(x, duplicated(x), NA)))
 friends_bmi=friends
 #replace the friends AID with their bmi in wave 1 or wave2
 friends_bmi[2:21] <- waves$w1or2bmi[match(as.character(unlist(friends_bmi[2:21])),
-as.character(waves$AID))]
+                                          as.character(waves$AID))]
 
 friends_bmi=friends_bmi%>%mutate(avgbmi=apply(friends_bmi[2:21], 1, function (x) mean(x, na.rm = TRUE)),
-avgbmi_ff=apply(select(.,starts_with("FF")), 1, function (x) mean(x, na.rm = TRUE)),
-avgbmi_mf=apply(select(.,starts_with("MF")), 1, function (x) mean(x, na.rm = TRUE)))
+                                 avgbmi_ff=apply(select(.,starts_with("FF")), 1, function (x) mean(x, na.rm = TRUE)),
+                                 avgbmi_mf=apply(select(.,starts_with("MF")), 1, function (x) mean(x, na.rm = TRUE)))
 
 ########################################################birth weight and low birthweight
 
 
 waves_weight=waves_full%>%select(AID, BIO_SEX, PC19B_O, PC19A_P, H5LIFE1L, H5LIFE1O, H5LIFE2, H4WAIST)%>%
-replace_with_na_all(~.x %in% c(98, 99, 998))%>%
-replace_with_na_at(.vars = "H5LIFE2", ~.x==7)%>%
+  replace_with_na_all(~.x %in% c(98, 99, 998))%>%
+  replace_with_na_at(.vars = "H5LIFE2", ~.x==7)%>%
   replace_with_na_at(.vars = c("H4WAIST"), ~.x %in% c(996:999)) %>% 
-mutate(birthweight_P=coalesce(PC19A_P,H5LIFE1L),
-birthweight_O=coalesce(PC19B_O,H5LIFE1O),
-birthweight_new=case_when(
-!is.na(birthweight_O) & !is.na(birthweight_P) ~ birthweight_P+birthweight_O/16,
-is.na(birthweight_O) & !is.na(birthweight_P) ~ birthweight_P),
-lowbirthweight=case_when(
-birthweight_new > 5.5 ~ 0,
-birthweight_P!=5 & birthweight_new <= 5.5 ~ 1,
-!is.na(birthweight_O) & birthweight_P==5 ~ 1,
-is.na(birthweight_O) & birthweight_P==5 ~ H5LIFE2,
-is.na(birthweight_new) & (H5LIFE2==1|H5LIFE2==0) ~ H5LIFE2
-))
+  mutate(birthweight_P=coalesce(PC19A_P,H5LIFE1L),
+         birthweight_O=coalesce(PC19B_O,H5LIFE1O), # suppliment birth weight info using self report info.
+         birthweight_new=case_when(
+           !is.na(birthweight_O) & !is.na(birthweight_P) ~ birthweight_P+birthweight_O/16,
+           is.na(birthweight_O) & !is.na(birthweight_P) ~ birthweight_P),
+         lowbirthweight=case_when(
+           birthweight_new > 5.5 ~ 0, # birthweight more than 5.5 definitely not lowbirthweight
+           birthweight_P!=5 & birthweight_new <= 5.5 ~ 1, # birthweight 0-4 pounds definitely lowbirthweigh
+           !is.na(birthweight_O) & birthweight_P==5 ~ 1, # for 5 pound birthweight, if birth ounce information is avaiable, then it is less than 5.5, so it is lowbirthweight 
+           is.na(birthweight_O) & birthweight_P==5 ~ H5LIFE2,# for 5 pound birthweight, if birth ounce information is na, use selfreport info
+           is.na(birthweight_new) & (H5LIFE2==1|H5LIFE2==0) ~ H5LIFE2 #for birthweigh na case, use seflreport lowbirthweight information
+         ))
 
 ########################################################region information at wave3 and wave4 wave5
 
@@ -736,37 +736,37 @@ wave3_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Conte
 wave4_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Contextual Files/Census Region - Wave IV/w4region.xpt")%>% as_tibble
 wave5_region<- read.xport("/Volumes/Data/Addhealth/Addhealthdata/wave5//Weights/wgtsw5s1.xpt") %>% as_tibble
 wave5_region=wave5_region%>%transmute(AID=AID, W5REGION=REGION%>%factor%>%fct_recode("NE" = "1", # northeast
-"MW" = "2", #midwest
-"S" = "3", #south
-"W"  = "4") )    #west
+                                                                                     "MW" = "2", #midwest
+                                                                                     "S" = "3", #south
+                                                                                     "W"  = "4") )    #west
 
 ########################################################wave5 occupation
 
 w5occupation=transmute(waves_full,AID,H5LM12,H5LM27,H5LM5)%>%
-mutate_at(.vars = "H5LM12", as.character)%>%
-mutate(w5occup=case_when(
-H5LM12 %in% c("0010-3540","0010-0950","0010-0430")~"0010",
-H5LM12 %in% c("3600-3655","3600-4650")~ "3600",
-H5LM12 %in% c("4700-4965","4700-5940")~ "4700",
-H5LM12=="6005-7630"~ "6005",
-H5LM12 %in% c("7700-8965","7700-9750")~"7700",
-nchar(H5LM12)==4~H5LM12
-
-))%>%
-mutate_at(.vars = "w5occup", as.integer)%>%
-mutate(w5occupgroup=case_when(
-w5occup %in% c(10:3540)~"manbussciart", #management,business,science and art
-w5occup %in% c(3600:4650)~"service", #service
-w5occup %in% c(4700:5940)~"saleoffice", #sales and office
-w5occup %in% c(6005:7630)~"construction", #natural resources, construction and maintenance
-w5occup %in% c(7700:9750)~"production", #production, transportation, material moving
-w5occup %in% c(9800:9830)~"military"#military specific
-))%>%
-mutate(w5occupgroup=if_else(is.na(w5occupgroup),case_when(
-H5LM27 %in% c(97,2,3) ~"undefined",# job category not defined, sick or maternity leave
-H5LM27 %in% c(1,4,5,6,7,9,10) ~"unemployed", #unemployed, disabled, student, retired, other
-H5LM27==8 ~"keepinghouse"#keeping house
-),w5occupgroup)%>%as.factor)
+  mutate_at(.vars = "H5LM12", as.character)%>%
+  mutate(w5occup=case_when(
+    H5LM12 %in% c("0010-3540","0010-0950","0010-0430")~"0010",
+    H5LM12 %in% c("3600-3655","3600-4650")~ "3600",
+    H5LM12 %in% c("4700-4965","4700-5940")~ "4700",
+    H5LM12=="6005-7630"~ "6005",
+    H5LM12 %in% c("7700-8965","7700-9750")~"7700",
+    nchar(H5LM12)==4~H5LM12
+    
+  ))%>%
+  mutate_at(.vars = "w5occup", as.integer)%>%
+  mutate(w5occupgroup=case_when(
+    w5occup %in% c(10:3540)~"manbussciart", #management,business,science and art
+    w5occup %in% c(3600:4650)~"service", #service
+    w5occup %in% c(4700:5940)~"saleoffice", #sales and office
+    w5occup %in% c(6005:7630)~"construction", #natural resources, construction and maintenance
+    w5occup %in% c(7700:9750)~"production", #production, transportation, material moving
+    w5occup %in% c(9800:9830)~"military"#military specific
+  ))%>%
+  mutate(w5occupgroup=if_else(is.na(w5occupgroup),case_when(
+    H5LM27 %in% c(97,2,3) ~"undefined",# job category not defined, sick or maternity leave
+    H5LM27 %in% c(1,4,5,6,7,9,10) ~"unemployed", #unemployed, disabled, student, retired, other
+    H5LM27==8 ~"keepinghouse"#keeping house
+  ),w5occupgroup)%>%as.factor)
 
 
 ######laura's substance variables and biological controls if pregnant
@@ -777,156 +777,156 @@ H5LM27==8 ~"keepinghouse"#keeping house
 #drinkeveryday is defined drink more than 3-5 days per week in the past 30 days
 #bingedrink is defined drink days in a row in the past 12 months.
 waves_laura=waves_full%>%select(AID, BIO_SEX, H5TO1, H5TO2, H5TO13, H5TO15, H5PG5)%>%
-mutate(eversmoke=as.factor(H5TO1),
-currentsmoke=case_when(
-H5TO1 == 0 | H5TO2==0 ~ 0,
-H5TO2 >0 & !is.na(H5TO2) ~ 1
-) %>% as.factor,
-
-###drinkeveryday 1, not drink everyday 0
-drinkeveryday=case_when(
-H5TO13 >= 6 & H5TO13!=97 & !is.na(H5TO13) ~ 1,
-H5TO13 == 97 |  H5TO13 < 5 ~ 0
-)%>% as.factor,
-
-###bingedrink 1, non bingerdrink 0
-
-bingedrink= case_when(
-H5TO15 ==1 | H5TO15 ==97 ~ 0,
-H5TO15 >1 & H5TO15 < 97 ~ 1
-)%>% as.factor,
-
-
-## if is pregnant
-w5pregnant=case_when(
-H5PG5==0 ~0,
-H5PG5==1&BIO_SEX=="2" ~1,
-H5PG5==1&BIO_SEX=="1" ~0
-)%>% as.factor)
+  mutate(eversmoke=as.factor(H5TO1),
+         currentsmoke=case_when(
+           H5TO1 == 0 | H5TO2==0 ~ 0,
+           H5TO2 >0 & !is.na(H5TO2) ~ 1
+         ) %>% as.factor,
+         
+         ###drinkeveryday 1, not drink everyday 0
+         drinkeveryday=case_when(
+           H5TO13 >= 6 & H5TO13!=97 & !is.na(H5TO13) ~ 1,
+           H5TO13 == 97 |  H5TO13 < 5 ~ 0
+         )%>% as.factor,
+         
+         ###bingedrink 1, non bingerdrink 0
+         
+         bingedrink= case_when(
+           H5TO15 ==1 | H5TO15 ==97 ~ 0,
+           H5TO15 >1 & H5TO15 < 97 ~ 1
+         )%>% as.factor,
+         
+         
+         ## if is pregnant
+         w5pregnant=case_when(
+           H5PG5==0 ~0,
+           H5PG5==1&BIO_SEX=="2" ~1,
+           H5PG5==1&BIO_SEX=="1" ~0
+         )%>% as.factor)
 #####wenjia's substance variables
 ##bingedrinker
 w5substanceuse=waves_full%>%select(AID, BIO_SEX,H5TO1, H5TO13, H5TO14, H5TO15, H5TO20, H5TO21)%>%
-mutate(
-bingedrink_year=case_when(#use drinking information in the past 12 months
-H5TO15==1 | H5TO15 ==97 ~ "nonbinge",#non binge
-H5TO15==2 | H5TO15==3 ~ "occasionbinge", #occasional binge
-H5TO15==4  ~ "weeklybinge", #approaching weekly  binge
-H5TO15==5 |  H5TO15 ==6| H5TO15 ==7 ~ "frequentbinge" # frequent binge
-
-)%>%as.factor,
-bingedrink_month=case_when( #use drinking information in the past 30 days
-H5TO14==97 | H5TO13==97 ~ "nonbinge",# non binge
-BIO_SEX=="2" & H5TO14<4  ~ "nonbinge",# non binge
-BIO_SEX=="1" & H5TO14<5  ~ "nonbinge",# non binge
-BIO_SEX=="2" & H5TO14>=4 & H5TO13==2 ~ "occasionbinge",
-BIO_SEX=="1" & H5TO14>=5 & H5TO13==2 ~ "occasionbinge",
-
-BIO_SEX=="2" & H5TO14>=4 & H5TO13>2 ~ "regularbinge",#  binge
-BIO_SEX=="1" & H5TO14>=5 & H5TO13>2 ~ "regularbinge"#  binge
-
-)%>%as.factor
-
-)
+  mutate(
+    bingedrink_year=case_when(#use drinking information in the past 12 months
+      H5TO15==1 | H5TO15 ==97 ~ "nonbinge",#non binge
+      H5TO15==2 | H5TO15==3 ~ "occasionbinge", #occasional binge
+      H5TO15==4  ~ "weeklybinge", #approaching weekly  binge
+      H5TO15==5 |  H5TO15 ==6| H5TO15 ==7 ~ "frequentbinge" # frequent binge
+      
+    )%>%as.factor,
+    bingedrink_month=case_when( #use drinking information in the past 30 days
+      H5TO14==97 | H5TO13==97 ~ "nonbinge",# non binge
+      BIO_SEX=="2" & H5TO14<4  ~ "nonbinge",# non binge
+      BIO_SEX=="1" & H5TO14<5  ~ "nonbinge",# non binge
+      BIO_SEX=="2" & H5TO14>=4 & H5TO13==2 ~ "occasionbinge",
+      BIO_SEX=="1" & H5TO14>=5 & H5TO13==2 ~ "occasionbinge",
+      
+      BIO_SEX=="2" & H5TO14>=4 & H5TO13>2 ~ "regularbinge",#  binge
+      BIO_SEX=="1" & H5TO14>=5 & H5TO13>2 ~ "regularbinge"#  binge
+      
+    )%>%as.factor
+    
+  )
 ############
 
 ############pubertal development for boys H1MP1-4 H2MP1-4, for girls H1FP1-4, H2FP1-4, H1FP6, H2FP9
 #############H1IR5, H2IR5 are judgement from the interviewer
 waves_pubertal=waves_full%>%select(AID, BIO_SEX, matches("H1MP[1-4]"), matches("H2MP[1-4]"),
-H1FP1, H1FP2, H1FP3, H1FP4, H1FP6,
-H2FP1, H2FP2, H2FP3, H2FP4, H2FP9,
-H1IR5, H2IR5)%>%
-replace_with_na_at(.vars= c("H1MP1", "H1MP2","H1MP3","H1MP4",
-"H2MP1", "H2MP2","H2MP3","H2MP4",
-"H1FP1", "H1FP2","H1FP3","H1FP6",
-"H2FP1", "H2FP2","H2FP3","H2FP9",
-"H1IR5", "H2IR5"), ~.x%in% c(6,7,8,9))%>%
-replace_with_na_at(.vars = c("H1FP4", "H2FP4"), ~.x%in% c(96, 97, 98))%>%
-mutate_at(.vars = c("H1FP4", "H2FP4"), .funs = (. %>%
-factor %>%
-fct_collapse("1" = c("15","16","17"),
-"2" = c("13","14"),
-"3" = c("12"),
-"4" = c("11","10"),
-"5" = c("0","1","2","3","4","5","6","7","8","9")
-)%>%
-as.character%>%
-as.numeric))%>%
-mutate(H2FP3=if_else(is.na(H2FP3) & H1FP3==1, H1FP3, H2FP3),
-H2FP4=if_else(is.na(H2FP4) & !is.na(H1FP4), H1FP4, H2FP4))
+                                   H1FP1, H1FP2, H1FP3, H1FP4, H1FP6,
+                                   H2FP1, H2FP2, H2FP3, H2FP4, H2FP9,
+                                   H1IR5, H2IR5)%>%
+  replace_with_na_at(.vars= c("H1MP1", "H1MP2","H1MP3","H1MP4",
+                              "H2MP1", "H2MP2","H2MP3","H2MP4",
+                              "H1FP1", "H1FP2","H1FP3","H1FP6",
+                              "H2FP1", "H2FP2","H2FP3","H2FP9",
+                              "H1IR5", "H2IR5"), ~.x%in% c(6,7,8,9))%>%
+  replace_with_na_at(.vars = c("H1FP4", "H2FP4"), ~.x%in% c(96, 97, 98))%>%
+  mutate_at(.vars = c("H1FP4", "H2FP4"), .funs = (. %>%
+                                                    factor %>%
+                                                    fct_collapse("1" = c("15","16","17"),
+                                                                 "2" = c("13","14"),
+                                                                 "3" = c("12"),
+                                                                 "4" = c("11","10"),
+                                                                 "5" = c("0","1","2","3","4","5","6","7","8","9")
+                                                    )%>%
+                                                    as.character%>%
+                                                    as.numeric))%>%
+  mutate(H2FP3=if_else(is.na(H2FP3) & H1FP3==1, H1FP3, H2FP3),
+         H2FP4=if_else(is.na(H2FP4) & !is.na(H1FP4), H1FP4, H2FP4))
 
 waves_pubertal=waves_pubertal%>%
-mutate(w1pd=select(., starts_with("H1"))%>%apply(1, mean, na.rm = TRUE),
-w2pd=select(., starts_with("H2"))%>%apply(1, mean, na.rm = TRUE),
-w1pd=if_else(is.na(w1pd), H1IR5, w1pd),
-w2pd=if_else(is.na(w2pd), H2IR5, w2pd)
-)
+  mutate(w1pd=select(., starts_with("H1"))%>%apply(1, mean, na.rm = TRUE),
+         w2pd=select(., starts_with("H2"))%>%apply(1, mean, na.rm = TRUE),
+         w1pd=if_else(is.na(w1pd), H1IR5, w1pd),
+         w2pd=if_else(is.na(w2pd), H2IR5, w2pd)
+  )
 
 ############parents social economic status at wave 1 and 2
 
 waves_pses=waves_full%>%select(AID, PA21, matches("PA57[A-F]"), PA59, PC21_6, PC22, PA20, PB17, PB18, H5LIFE3,
-H1RF9,H2RF9,H1RM9, H2RM9,
-H1RM4,H2RM4,H1RF4,H2RF4,
-H1RM14,H1RF14,H2RM14,H2RF14, PA63
+                               H1RF9,H2RF9,H1RM9, H2RM9,
+                               H1RM4,H2RM4,H1RF4,H2RF4,
+                               H1RM14,H1RF14,H2RM14,H2RF14, PA63
 )%>%
-replace_with_na_at(.vars=c("H1RM4","H2RM4","H1RF4","H2RF4"), ~.x%in%c(96, 98, 99))%>%
-mutate(
-#occupation of parents
-poccrm_w12=coalesce(H1RM4,H2RM4)%>%
-factor %>%
-fct_collapse("manbussciart" = c("1","2","3","4"),
-"service" = c("7"),
-"saleoffice" = c("5","6"),
-"construction" = c("9","10","14"),
-"production" = c("8","11","12"),
-"military" =c("13"),
-"undefined"=c("15"),
-"unemployed"=c("16"),
-"norm"=c("97")),
-poccrf_w12=coalesce(H1RF4,H2RF4)%>%
-factor %>%
-fct_collapse("manbussciart" = c("1","2","3","4"),
-"service" = c("7"),
-"saleoffice" = c("5","6"),
-"construction" = c("9","10","14"),
-"production" = c("8","11","12"),
-"military" =c("13"),
-"undefined"=c("15"),
-"unemployed"=c("16"),
-"norf"=c("97")),
-#receive food stamp in one month before the interview in 1955
-pfoodstamp=case_when(PA57D==0 ~0,
-PA57D==1 ~1)%>%as.factor,
-#other types of public assitance
-ppublicassit=case_when(
-PA21==1 | PA57B==1 | PA57C==1 | PA57D==1  | PA57F==1 ~ 1,
-PA57B==0 & PA57C==0 & PA57D==0  & PA57F==0 ~0,
-H1RF9==1 | H2RF9==1 | H1RM9==1 | H2RM9==1 ~1,
-H1RF9==0 & H2RF9==0 & H1RM9==0 & H2RM9==0 ~0)%>%as.factor,
-#children has health insurance or not
-chealthinsurance=case_when(
-PC21_6==0 ~1,
-PC21_6==1  ~ 0
-)%>%as.factor,
-#children has ever lost health insurance
-chealthinsurance_everlost=case_when(
-PC22==1 |PC22==7 ~ 1,
-PC22==0 ~0
-)%>%as.factor,
-#parents feel hard to get medical care for family
-phard_healthinsurance=case_when(
-PA59==3|PA59==4 ~ 1,
-PA59==1|PA59==2 ~ 0
-)%>%as.factor,
-#parent ever smoke
-peversmoke=case_when(
-PA63==1 ~1,
-H1RM14==1|H1RF14==1|H2RM14==1|H2RF14==1 ~1,
-(H1RM14==0 |H1RM14==7) & (H1RF14==0|H1RF14==7) & (H2RM14==0|H2RM14==7) & (H2RF14==0|H2RF14==7) ~0,
-PA63==0 ~0
-)%>%as.factor,
-#preterm delivery
-cpreterm=as.factor(H5LIFE3)
-)
+  replace_with_na_at(.vars=c("H1RM4","H2RM4","H1RF4","H2RF4"), ~.x%in%c(96, 98, 99))%>%
+  mutate(
+    #occupation of parents
+    poccrm_w12=coalesce(H1RM4,H2RM4)%>%
+      factor %>%
+      fct_collapse("manbussciart" = c("1","2","3","4"),
+                   "service" = c("7"),
+                   "saleoffice" = c("5","6"),
+                   "construction" = c("9","10","14"),
+                   "production" = c("8","11","12"),
+                   "military" =c("13"),
+                   "undefined"=c("15"),
+                   "unemployed"=c("16"),
+                   "norm"=c("97")),
+    poccrf_w12=coalesce(H1RF4,H2RF4)%>%
+      factor %>%
+      fct_collapse("manbussciart" = c("1","2","3","4"),
+                   "service" = c("7"),
+                   "saleoffice" = c("5","6"),
+                   "construction" = c("9","10","14"),
+                   "production" = c("8","11","12"),
+                   "military" =c("13"),
+                   "undefined"=c("15"),
+                   "unemployed"=c("16"),
+                   "norf"=c("97")),
+    #receive food stamp in one month before the interview in 1955
+    pfoodstamp=case_when(PA57D==0 ~0,
+                         PA57D==1 ~1)%>%as.factor,
+    #other types of public assitance
+    ppublicassit=case_when(
+      PA21==1 | PA57B==1 | PA57C==1 | PA57D==1  | PA57F==1 ~ 1,
+      PA57B==0 & PA57C==0 & PA57D==0  & PA57F==0 ~0,
+      H1RF9==1 | H2RF9==1 | H1RM9==1 | H2RM9==1 ~1,
+      H1RF9==0 & H2RF9==0 & H1RM9==0 & H2RM9==0 ~0)%>%as.factor,
+    #children has health insurance or not
+    chealthinsurance=case_when(
+      PC21_6==0 ~1,
+      PC21_6==1  ~ 0
+    )%>%as.factor,
+    #children has ever lost health insurance
+    chealthinsurance_everlost=case_when(
+      PC22==1 |PC22==7 ~ 1,
+      PC22==0 ~0
+    )%>%as.factor,
+    #parents feel hard to get medical care for family
+    phard_healthinsurance=case_when(
+      PA59==3|PA59==4 ~ 1,
+      PA59==1|PA59==2 ~ 0
+    )%>%as.factor,
+    #parent ever smoke
+    peversmoke=case_when(
+      PA63==1 ~1,
+      H1RM14==1|H1RF14==1|H2RM14==1|H2RF14==1 ~1,
+      (H1RM14==0 |H1RM14==7) & (H1RF14==0|H1RF14==7) & (H2RM14==0|H2RM14==7) & (H2RF14==0|H2RF14==7) ~0,
+      PA63==0 ~0
+    )%>%as.factor,
+    #preterm delivery
+    cpreterm=as.factor(H5LIFE3)
+  )
 ############
 ####################Mike's added variable for long arm 
 waves_longarm_M=waves_full%>% 
@@ -1002,18 +1002,20 @@ waves_longarm_M=waves_full%>%
 
 ######################################################## create waves_wenjia by combine all the newly created variables
 waves_wenjia=waves_wenjia%>%left_join(friends_bmi[c("AID","friends_num","avgbmi", "avgbmi_ff", "avgbmi_mf")], by= "AID")%>%
-left_join(obesityclass[c("AID", "obesityclass", "Prob_C1", "Prob_C2", "Prob_C3")], by= "AID")%>%
-left_join(waves_weight[c("AID", "birthweight_new", "lowbirthweight", "H4WAIST")], by="AID")%>%
-left_join(wave3_region, by="AID")%>%
-left_join(wave4_region, by="AID")%>%
-left_join(wave5_region, by="AID")%>%
-left_join(select(w5occupation, AID, w5occupgroup), by="AID")%>%
-left_join(select(waves_pubertal,AID, w1pd, w2pd), by="AID")%>%
-left_join(select(w5substanceuse,AID, bingedrink_year, bingedrink_month), by="AID")%>%
-left_join(select(waves_pses, AID, poccrm_w12,poccrf_w12,pfoodstamp,ppublicassit,
-chealthinsurance,chealthinsurance_everlost, phard_healthinsurance,peversmoke,cpreterm), by="AID") %>% 
+  left_join(obesityclass[c("AID", "obesityclass", "Prob_C1", "Prob_C2", "Prob_C3")], by= "AID")%>%
+  left_join(waves_weight[c("AID", "birthweight_new", "lowbirthweight", "H4WAIST")], by="AID")%>%
+  left_join(wave3_region, by="AID")%>%
+  left_join(wave4_region, by="AID")%>%
+  left_join(wave5_region, by="AID")%>%
+  left_join(select(w5occupation, AID, w5occupgroup), by="AID")%>%
+  left_join(select(waves_pubertal,AID, w1pd, w2pd), by="AID")%>%
+  left_join(select(w5substanceuse,AID, bingedrink_year, bingedrink_month), by="AID")%>%
+  left_join(select(waves_pses, AID, poccrm_w12,poccrf_w12,pfoodstamp,ppublicassit,
+                   chealthinsurance,chealthinsurance_everlost, phard_healthinsurance,peversmoke,cpreterm), by="AID") %>% 
   left_join(waves_longarm_M,by="AID")
 ######################################################## put new variables in to waves and make some of them dummy
+
+
 
 
 
@@ -1025,8 +1027,8 @@ chealthinsurance,chealthinsurance_everlost, phard_healthinsurance,peversmoke,cpr
 
 
 waves=waves%>%left_join(waves_wenjia, by="AID")%>%
-left_join(select(waves_laura, -starts_with(match = "H5")),by="AID")%>%
-dummy_cols(select_columns =c( "edu_max", "sex_interv", "obesityclass", "w5occupgroup","W5REGION","bingedrink_year","bingedrink_month"))
+  left_join(select(waves_laura, -starts_with(match = "H5")),by="AID")%>%
+  dummy_cols(select_columns =c( "edu_max", "sex_interv", "obesityclass", "w5occupgroup","W5REGION","bingedrink_year","bingedrink_month"))
 
 
 
@@ -1052,7 +1054,6 @@ if(0){
     filter(AID %in% dat$AID) %>% 
     saveRDS(file = "/volumes/share/data/waves_blood.rds")
 }
- 
 
 
 
