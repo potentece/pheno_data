@@ -995,7 +995,8 @@ waves_longarm_M=waves_full%>%
               # is.na(SEI_rm_w12)|is.na(SEI_rf_w12) ~ if_else(is.na(SEI_rm_w12), SEI_rf_w12, SEI_rm_w12)
             ),
             SEI_max_p_w12_log=log(SEI_max_p_w12),
-            income_pp1_log=if_else(PA55>0,log(PA55),NULL)
+            income_pp1_log=case_when(PA55==0 ~0,
+                                     PA55<9996 ~ log(PA55))
             
   ) %>% select(-starts_with("t"))
 
