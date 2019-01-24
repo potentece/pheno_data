@@ -466,7 +466,7 @@ ph <-
          PA22, PC37, PC38, PC53, PC54, PC49A_1, PC49B_1, PC49C_1, PC49D_1, PC49E_1, PC49F_1, H1GI9, H1RM4, H1RF4) %>% 
   #handling missing data 
   replace_with_na_all(condition = ~.x == 96) %>% 
-  replace_with_na_at(.vars = c("PA63","PA56", "PA10", "PA31", "PA32", "PA33", "PA34", "PA62"),
+  replace_with_na_at(.vars = c("PA63","PA56", "PA10", "PA31", "PA32", "PA33", "PA34"),# remove"PA62" from this line as PA62==6 means five or more times having more than 5 drinks
                      condition = ~ .x == 6) %>% 
   replace_with_na_at(.vars = c("H1RM4", "H1RF4"),
                      condition = ~ .x >= 98) %>% 
@@ -627,6 +627,10 @@ waves_cecilia  =
     obesew3 = as.numeric(w3bmi>=30),
     obesew1or2 = ifelse(!is.na(w1bmi), as.numeric(w1bmi>=30), as.numeric(w2bmi>=30)),
     w1or2bmi  = ifelse(!is.na(w1bmi), w1bmi, w2bmi),
+    
+    #overweight at different waves
+    overweight_ff5 = as.numeric(w5bmi>=25),
+    
     # having or had diabetes and heart attack  
     diabetes = H5ID6D,
     heartatk = H5ID6E
@@ -824,11 +828,17 @@ w5substanceuse=waves_full%>%select(AID, BIO_SEX,H5TO1, H5TO13, H5TO14, H5TO15, H
       BIO_SEX=="2" & H5TO14>=4 & H5TO13>2 ~ "regularbinge",#  binge
       BIO_SEX=="1" & H5TO14>=5 & H5TO13>2 ~ "regularbinge"#  binge
       
-    )%>%as.factor
-    
+    )%>%as.factor,
+    calchohol=case_when(# dichotomous variable corresponding to palchohol
+      H5TO14==97 | H5TO13==97 ~ 0,
+      H5TO14<5 ~ 0,
+      H5TO14>=5 & H5TO13>1 ~ 1)
+    %>%as.factor
   )
 ############
-
+# bingedrink_month_frequency=waves_full %>% filter( (BIO_SEX=="2" & H5TO14>=4)|(BIO_SEX=="1" & H5TO14>=5)) %>% right_join(aD[1], by="AID") %>% 
+# select(BIO_SEX, H5TO13) %>% mutate(H5TO13=H5TO13 %>% as.factor %>% fct_recode("non"="1","one day"="2","2 or 3 days"="3","1 day a week"="4", "2 days a
+# week"="5", "3 to 5 days a week"="6", "every day or almost every day"="7", "refused"="97"))
 ############pubertal development for boys H1MP1-4 H2MP1-4, for girls H1FP1-4, H2FP1-4, H1FP6, H2FP9
 #############H1IR5, H2IR5 are judgement from the interviewer
 waves_pubertal=waves_full%>%select(AID, BIO_SEX, matches("H1MP[1-4]"), matches("H2MP[1-4]"),
@@ -1010,7 +1020,7 @@ waves_wenjia=waves_wenjia%>%left_join(friends_bmi[c("AID","friends_num","avgbmi"
   left_join(wave5_region, by="AID")%>%
   left_join(select(w5occupation, AID, w5occupgroup), by="AID")%>%
   left_join(select(waves_pubertal,AID, w1pd, w2pd), by="AID")%>%
-  left_join(select(w5substanceuse,AID, bingedrink_year, bingedrink_month), by="AID")%>%
+  left_join(select(w5substanceuse,AID, bingedrink_year, bingedrink_month, calchohol), by="AID")%>%
   left_join(select(waves_pses, AID, poccrm_w12,poccrf_w12,pfoodstamp,ppublicassit,
                    chealthinsurance,chealthinsurance_everlost, phard_healthinsurance,peversmoke,cpreterm), by="AID") %>% 
   left_join(waves_longarm_M,by="AID")
