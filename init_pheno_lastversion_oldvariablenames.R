@@ -430,8 +430,10 @@ new_variables_for_michael =
     # Household assets (h5ec2+c3?+4)-(h5ec5a+b+c) # JC indeed h5ec3 is not to be included
     assets_w5_pos           = select(., matches("H5EC[2,4]")) %>% apply(1, sum, na.rm = 1),
     assets_w5_neg           = select(., matches("H5EC5[A-C]")) %>% apply(1, sum, na.rm = 1),
-    assets_household_net_w5 = assets_w5_pos - assets_w5_neg) 
-
+    assets_household_net_w5 = assets_w5_pos - assets_w5_neg) %>% 
+    # create household assets mike in the ses model 
+  mutate(asset_hh_ff5=case_when(!is.na(H5EC2)&!is.na(H5EC4)~H5EC2+H5EC4, is.na(H5EC2)~H5EC4, is.na(H5EC4)~H5EC2), 
+         asset_hh_ff5_log=ifelse(asset_hh_ff5>0, log(asset_hh_ff5), ifelse(asset_hh_ff5==0,0,NA)))
 waves = 
   waves %>% 
   left_join(new_variables_for_michael, by = "AID")
@@ -745,7 +747,8 @@ wave5_region=wave5_region%>%transmute(AID=AID, W5REGION=REGION%>%factor%>%fct_re
                                                                                      "W"  = "4") )    #west
 
 ########################################################wave5 occupation
-SEI_occ10=readRDS("/Volumes/Share/SEI_occ10.rds")
+# SEI_occ10=readRDS("/Volumes/Share/SEI_occ10.rds")
+SEI_occ10<- read_excel("/Volumes/Share/PRESTG10SEI10_supplement-1.xls") %>% as.tibble
 
 w5occupation=transmute(waves_full,AID,H5LM12,H5LM27,H5LM5)%>%
   mutate_at(.vars = "H5LM12", as.character)%>%
@@ -772,7 +775,8 @@ w5occupation=transmute(waves_full,AID,H5LM12,H5LM27,H5LM5)%>%
     H5LM27 %in% c(1,4,5,6,7,9,10) ~"unemployed", #unemployed, disabled, student, retired, other
     H5LM27==8 ~"keepinghouse"#keeping house
   ),w5occupgroup)%>%as.factor) %>% 
-left_join(SEI_occ10 %>% select(occ10,SEI10), by="occ10")
+left_join(SEI_occ10 %>% select(occ10,SEI10), by="occ10") %>% 
+  mutate(SEI_ff5=SEI10)
 
 
 ######laura's substance variables and biological controls if pregnant
@@ -1020,7 +1024,7 @@ waves_wenjia=waves_wenjia%>%left_join(friends_bmi[c("AID","friends_num","avgbmi"
   left_join(wave3_region, by="AID")%>%
   left_join(wave4_region, by="AID")%>%
   left_join(wave5_region, by="AID")%>%
-  left_join(select(w5occupation, AID, w5occupgroup), by="AID")%>%
+  left_join(select(w5occupation, AID, w5occupgroup, SEI_ff5), by="AID")%>%
   left_join(select(waves_pubertal,AID, w1pd, w2pd), by="AID")%>%
   left_join(select(w5substanceuse,AID, bingedrink_year, bingedrink_month, calchohol), by="AID")%>%
   left_join(select(waves_pses, AID, poccrm_w12,poccrf_w12,pfoodstamp,ppublicassit,
