@@ -431,8 +431,8 @@ new_variables_for_michael =
     assets_w5_pos           = select(., matches("H5EC[2,4]")) %>% apply(1, sum, na.rm = 1),
     assets_w5_neg           = select(., matches("H5EC5[A-C]")) %>% apply(1, sum, na.rm = 1),
     assets_household_net_w5 = assets_w5_pos - assets_w5_neg) %>% 
-    # create household assets mike in the ses model 
-  mutate(asset_hh_ff5=case_when(!is.na(H5EC2)&!is.na(H5EC4)~H5EC2+H5EC4, is.na(H5EC2)~H5EC4, is.na(H5EC4)~H5EC2), 
+    # create household assets mike in the ses model , divided by 1000 to make it in the same sacle as parents income in parents phase 1
+  mutate(asset_hh_ff5=case_when(!is.na(H5EC2)&!is.na(H5EC4)~(H5EC2+H5EC4)/1000, is.na(H5EC2)~H5EC4/1000, is.na(H5EC4)~H5EC2/1000), 
          asset_hh_ff5_log=ifelse(asset_hh_ff5>0, log(asset_hh_ff5), ifelse(asset_hh_ff5==0,0,NA)))
 waves = 
   waves %>% 
