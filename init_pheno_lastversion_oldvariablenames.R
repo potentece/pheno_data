@@ -745,10 +745,11 @@ wave5_region=wave5_region%>%transmute(AID=AID, W5REGION=REGION%>%factor%>%fct_re
                                                                                      "W"  = "4") )    #west
 
 ########################################################wave5 occupation
+SEI_occ10=readRDS("/Volumes/Share/SEI_occ10.rds")
 
 w5occupation=transmute(waves_full,AID,H5LM12,H5LM27,H5LM5)%>%
   mutate_at(.vars = "H5LM12", as.character)%>%
-  mutate(w5occup=case_when(
+  mutate(occ10=case_when(
     H5LM12 %in% c("0010-3540","0010-0950","0010-0430")~"0010",
     H5LM12 %in% c("3600-3655","3600-4650")~ "3600",
     H5LM12 %in% c("4700-4965","4700-5940")~ "4700",
@@ -757,20 +758,21 @@ w5occupation=transmute(waves_full,AID,H5LM12,H5LM27,H5LM5)%>%
     nchar(H5LM12)==4~H5LM12
     
   ))%>%
-  mutate_at(.vars = "w5occup", as.integer)%>%
+  mutate_at(.vars = "occ10", as.integer)%>%
   mutate(w5occupgroup=case_when(
-    w5occup %in% c(10:3540)~"manbussciart", #management,business,science and art
-    w5occup %in% c(3600:4650)~"service", #service
-    w5occup %in% c(4700:5940)~"saleoffice", #sales and office
-    w5occup %in% c(6005:7630)~"construction", #natural resources, construction and maintenance
-    w5occup %in% c(7700:9750)~"production", #production, transportation, material moving
-    w5occup %in% c(9800:9830)~"military"#military specific
+    occ10 %in% c(10:3540)~"manbussciart", #management,business,science and art
+    occ10 %in% c(3600:4650)~"service", #service
+    occ10 %in% c(4700:5940)~"saleoffice", #sales and office
+    occ10 %in% c(6005:7630)~"construction", #natural resources, construction and maintenance
+    occ10 %in% c(7700:9750)~"production", #production, transportation, material moving
+    occ10 %in% c(9800:9830)~"military"#military specific
   ))%>%
   mutate(w5occupgroup=if_else(is.na(w5occupgroup),case_when(
     H5LM27 %in% c(97,2,3) ~"undefined",# job category not defined, sick or maternity leave
     H5LM27 %in% c(1,4,5,6,7,9,10) ~"unemployed", #unemployed, disabled, student, retired, other
     H5LM27==8 ~"keepinghouse"#keeping house
-  ),w5occupgroup)%>%as.factor)
+  ),w5occupgroup)%>%as.factor) %>% 
+left_join(SEI_occ10 %>% select(occ10,SEI10), by="occ10")
 
 
 ######laura's substance variables and biological controls if pregnant
