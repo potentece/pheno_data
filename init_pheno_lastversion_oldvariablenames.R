@@ -19,14 +19,19 @@ if(exec_from_uzh){
   
   # in home 
   
+  # in home 
+  wave1 <- read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/In Home Interview Files/allwave1.xpt") %>% as_tibble
+  wave2 <- read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/In Home Interview Files/wave2.xpt") %>% as_tibble
+  wave3 <- read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/In Home Interview Files/wave3.xpt") %>% as_tibble
+  wave4 <- read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/In Home Interview Files/wave4.xpt") %>% as_tibble
   wave5 <- read.xport("/Volumes/Data/Addhealth/Addhealthdata/wave5/SurveyData/wave5_s1.xpt") %>% as_tibble
   
   # other
-  waves_full=readRDS(file = "/volumes/share/data/waves_full.rds")# full copy, waves will be trimmed below
   w1_context     = read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/Contextual Files/Contextual - Wave I/Context1.xpt") 
   w4_constructed = read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/Constructed Variables/W4 Constructed/w4vars.xpt")  
   wave1_friends<-read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/Friend Files/Wave I In-Home Nominations/hfriend1.xpt") %>% as_tibble
   wave2_friends<-read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/Friend Files/Wave II In-Home Nominations/hfriend2.xpt") %>% as_tibble
+  glucose<-read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/W4 Supplemental Files-Biomarker/Glucose/glu_a1c.xpt") %>% as_tibble
   aD<-readRDS("/Volumes/share/data/aD.rds")%>% as_tibble
   PGS=read.xport("/Volumes/Data/addhealth/addhealthdata/wave5/wave5_pgs_and_parental/Genetic Files/Polygenic Scores/PGS_AH1.xpt")%>% as_tibble
   obesityclass=readRDS("/Volumes/share/data/obesityclass.rds")
@@ -37,13 +42,26 @@ if(exec_from_uzh){
   # execute from longleaf
 }
 
+waves = 
+  wave1 %>%
+  left_join(wave2, by = "AID") %>%
+  left_join(wave3, by = "AID") %>%
+  left_join(wave4, by = "AID") %>%
+  left_join(wave5, by = "AID") %>%
+  left_join(w1_context, by = "AID") %>% 
+  left_join(w4_constructed, by = "AID") %>% 
+  left_join(glucose, by="AID")
+
+
+waves_full = waves # full copy, waves will be trimmed below
 
 # call reformat_rna_counts.R here
 # i.e. add laurens file, make an expression set object dat
 # finally overwrite in memo.Rmd : a <- dat %>% pData
 
-rm(wave5) # duplicate
-
+rm(wave1, wave2, wave3, wave4, wave5, w1_context, w4_constructed) # duplicate
+  
+  
 ########### get Plate and AvgCorrelogram100
 
 PGS$AID=as.character(PGS$AID)
@@ -599,15 +617,16 @@ waves =
 # CECILIAS CONTROL VARIABLES
 ########################################################
 
-waves_cecilia  = 
-  waves_full %>% 
-  select(AID, H1GH59A, H1GH59B, H1GH60, H2WS16W, H2WS16HF, 
-         H2WS16HI, H3WGT, H3HGT_F, H3HGT_I, H4BMI, H5ID3, H5ID2F, H5ID2I, H5ID6D, H5ID6E, PC19A_P, PC19B_O)  %>% 
-  #handling missing data 
+waves_cecilia  =
+  waves_full %>%
+  select(AID, H1GH59A, H1GH59B, H1GH60, H2WS16W, H2WS16HF,
+         H2WS16HI, H3WGT, H3HGT_F, H3HGT_I, H4BMI, H5ID3, H5ID2F, H5ID2I, H5ID6D, H5ID6E, PC19A_P, PC19B_O,
+         C_MED, C_HBA1C, C_JOINT, C_NFGLU, C_FGLU, H5REL4)  %>% #biomarkers wave 5
+  #handling missing data
   replace_with_na_at(.vars = c("H1GH59A","H1GH59B", "H3HGT_F","H3HGT_I", "H2WS16HF", "H2WS16HI", "PC19A_P", "PC19B_O"),
-                     ~.x %in% c(96:99)) %>% 
+                     ~.x %in% c(96:99)) %>%
   replace_with_na_at(.vars = c("H1GH60", "H3WGT", "H4BMI",  "H2WS16W"),
-                     ~.x %in% c(996:999)) %>% 
+                     ~.x %in% c(996:999)) %>%
   replace_with_na_at(.vars = c("H5ID2I", "H5ID2F"),
                      ~.x == 98) %>%
   replace_with_na_at(.vars = c("H4BMI"),
