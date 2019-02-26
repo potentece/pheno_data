@@ -87,4 +87,4 @@ dat_dupes = dat[, dat$AID %in% dupes]
 # final dataset: remove one of the above duplicates (the second)
 dat = dat[, !duplicated(dat$AID) ] 
 # save  ***
-dat %>% saveRDS(file = "data/steves_dt.rds")
+dat %>% saveRDS(file = "data/dt_steve.rds")

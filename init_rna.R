@@ -126,4 +126,4 @@ pD = dat %>% pData
 fD = dat %>% featureData 
 aD = cbind(pD,t(eD)) %>% as_tibble 
 # all data ***
-aD %>% saveRDS(file = "data/dtTidy.rds")
+aD %>% saveRDS(file = "data/dt_tidy.rds")
