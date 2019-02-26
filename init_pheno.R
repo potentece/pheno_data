@@ -8,7 +8,7 @@ library(readxl)
 # library(SASxport)
 
 ########################################################
-# AUTHORS, JUSTIN CHUMBLEY, WENJIA XU, CECILIA POTENTE
+# AUTHORS, JUSTIN CHUMBLEY, CECILIA POTENTE
 ########################################################
 
 ########################################################
@@ -33,38 +33,17 @@ if(exec_from_uzh){
   wave1_friends<-read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/Friend Files/Wave I In-Home Nominations/hfriend1.xpt") %>% as_tibble
   wave2_friends<-read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/Friend Files/Wave II In-Home Nominations/hfriend2.xpt") %>% as_tibble
   glucose<-read.xport("/Volumes/Data/Addhealth/Addhealthdata/waves_1_4/W4 Supplemental Files-Biomarker/Glucose/glu_a1c.xpt") %>% as_tibble
-  aD<-readRDS("/Volumes/share/data/aD.rds")%>% as_tibble
+  dt=readRDS("/Volumes/Share/preprocess/data/dt.rds")
   PGS=read.xport("/Volumes/Data/addhealth/addhealthdata/wave5/wave5_pgs_and_parental/Genetic Files/Polygenic Scores/PGS_AH1.xpt")%>% as_tibble
-  obesityclass=readRDS("/Volumes/share/data/obesityclass.rds")
+  obesityclass=readRDS("/Volumes/share/projects/bmi_lifecourse/old/obesityclass.rds")
   # blood 
   w5AID <- wave5$AID
   
 } else {
   # execute from longleaf
 }
-
-waves = 
-  wave1 %>%
-  left_join(wave2, by = "AID") %>%
-  left_join(wave3, by = "AID") %>%
-  left_join(wave4, by = "AID") %>%
-  left_join(wave5, by = "AID") %>%
-  left_join(w1_context, by = "AID") %>% 
-  left_join(w4_constructed, by = "AID") %>% 
-  left_join(glucose, by="AID")
-
-
-waves_full = waves # full copy, waves will be trimmed below
-
-# call reformat_rna_counts.R here
-# i.e. add laurens file, make an expression set object dat
-# finally overwrite in memo.Rmd : a <- dat %>% pData
-
-rm(wave1, wave2, wave3, wave4, wave5, w1_context, w4_constructed) # duplicate
-  
-  
-########### get Plate and AvgCorrelogram100
-
+########### quality measures (get Plate and AvgCorrelogram100)
+ID_both=dt@phenoData@data %>% select(AID,VialID) %>% as.tibble
 PGS$AID=as.character(PGS$AID)
 quality <- read.table("/Volumes/Data/addhealth/RNA/AddHealthYr1_Plates1-12_Log2CPM_QCMetrics.txt",  header = TRUE, dec = ".")
 quality = quality %>% as_tibble
@@ -74,10 +53,32 @@ quality = quality %>% mutate(VialID = str_c("X",Sample))
 quality$Plate <- as.factor(quality$Plate)
 quality$AvgCorrelogram100 <- as.numeric(quality$AvgCorrelogram100)
 attr_qual <- quality %>% 
-  select(VialID, Plate, AvgCorrelogram100)
-aD <-left_join(aD, attr_qual, by = "VialID")
+  select(VialID, Plate, AvgCorrelogram100) %>% 
+  right_join(ID_both, attr_qual, by = "VialID")
 
 ###########
+waves = 
+  wave1 %>%
+  left_join(wave2, by = "AID") %>%
+  left_join(wave3, by = "AID") %>%
+  left_join(wave4, by = "AID") %>%
+  left_join(wave5, by = "AID") %>%
+  left_join(w1_context, by = "AID") %>% 
+  left_join(w4_constructed, by = "AID") %>% 
+  left_join(glucose, by="AID") %>% 
+  left_join(attr_qual, by="AID")
+
+
+waves_full = waves # full copy, waves will be trimmed below
+
+# call reformat_rna_counts.R here
+# i.e. add laurens file, make an expression set object dat
+# finally overwrite in memo.Rmd : a <- dat %>% pData
+
+rm(wave1, wave2, wave3, wave4, wave5, w1_context, w4_constructed) # duplicate
+
+
+
 
 ########################################################
 # CONSTRUCT CLEAN METRICS
@@ -450,7 +451,7 @@ new_variables_for_michael =
     assets_w5_pos           = select(., matches("H5EC[2,4]")) %>% apply(1, sum, na.rm = 1),
     assets_w5_neg           = select(., matches("H5EC5[A-C]")) %>% apply(1, sum, na.rm = 1),
     assets_household_net_w5 = assets_w5_pos - assets_w5_neg) %>% 
-    # create household assets mike in the ses model , divided by 1000 to make it in the same sacle as parents income in parents phase 1
+  # create household assets mike in the ses model , divided by 1000 to make it in the same sacle as parents income in parents phase 1
   mutate(asset_hh_ff5=case_when(!is.na(H5EC2)&!is.na(H5EC4)~(H5EC2+H5EC4)/1000, is.na(H5EC2)~H5EC4/1000, is.na(H5EC4)~H5EC2/1000), 
          asset_hh_ff5_log=ifelse(asset_hh_ff5>0, log(asset_hh_ff5), ifelse(asset_hh_ff5==0,0,NA)))
 waves = 
@@ -461,7 +462,7 @@ waves =
 # CHUNK 4: ADD SHAWN'S INCOME-OCCUPATION DATA
 ########################################################
 
-shawn <- haven::read_dta("/Volumes/share/soc2000-mean-median-educ-wages.dta")
+shawn <- haven::read_dta("/Volumes/share/ext/data/soc2000-mean-median-educ-wages.dta")
 waves = 
   waves %>% 
   mutate(SOC2000 = as.character(SOC2000)) %>% 
@@ -709,7 +710,6 @@ waves_wenjia =
                       nh==0 & (ra==1|ra==4) ~3, #asian nonhispanic
                       nh==0 & rw!=1 & rb!=1 & rb!=2 & ra!=4 & ra!=1 ~4, #other nonhispanic
                       nh==1 ~5))%>% #hispanic
-  left_join(aD[,c("AID","Plate","AvgCorrelogram100")])%>%
   dummy_cols(select_columns =c( "re", "Plate"))%>%
   left_join(PGS[,c("AID", "PGSBMI")], by="AID")
 
@@ -768,7 +768,7 @@ wave5_region=wave5_region%>%transmute(AID=AID, W5REGION=REGION%>%factor%>%fct_re
 
 ########################################################wave5 occupation
 # SEI_occ10=readRDS("/Volumes/Share/SEI_occ10.rds")
-SEI_occ10<- read_excel("/Volumes/Share/PRESTG10SEI10_supplement-1.xls") %>% as.tibble
+SEI_occ10<- read_excel("/Volumes/Share/ext/data/PRESTG10SEI10_supplement-1.xls") %>% as.tibble
 
 w5occupation=transmute(waves_full,AID,H5LM12,H5LM27,H5LM5)%>%
   mutate_at(.vars = "H5LM12", as.character)%>%
@@ -795,7 +795,7 @@ w5occupation=transmute(waves_full,AID,H5LM12,H5LM27,H5LM5)%>%
     H5LM27 %in% c(1,4,5,6,7,9,10) ~"unemployed", #unemployed, disabled, student, retired, other
     H5LM27==8 ~"keepinghouse"#keeping house
   ),w5occupgroup)%>%as.factor) %>% 
-left_join(SEI_occ10 %>% select(occ10,SEI10), by="occ10") %>% 
+  left_join(SEI_occ10 %>% select(occ10,SEI10), by="occ10") %>% 
   mutate(SEI_ff5=SEI10)
 
 
@@ -1075,7 +1075,7 @@ waves=waves%>%left_join(waves_wenjia, by="AID")%>%
 ########################################################
 
 # a clean subset of variables
-waves      %>% saveRDS(file = "/volumes/share/data/waves.rds")
+waves      %>% saveRDS(file = "/volumes/share/preprocess/data/waves.rds")
 
 ########################################################
 # ADDITIONAL SAVE: TEMPORARY FOR MICHAELS CONVENIENCE
