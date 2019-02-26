@@ -8,7 +8,7 @@ library(readxl)
 # library(SASxport)
 
 ########################################################
-# AUTHORS, JUSTIN CHUMBLEY, CECILIA POTENTE
+# AUTHORS, JUSTIN CHUMBLEY, WENJIA XU, CECILIA POTENTE
 ########################################################
 
 ########################################################
