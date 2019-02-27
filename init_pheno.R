@@ -623,7 +623,8 @@ waves_cecilia  =
   waves_full %>%
   select(AID, H1GH59A, H1GH59B, H1GH60, H2WS16W, H2WS16HF,
          H2WS16HI, H3WGT, H3HGT_F, H3HGT_I, H4BMI, H5ID3, H5ID2F, H5ID2I, H5ID6D, H5ID6E, PC19A_P, PC19B_O,
-         C_MED, C_HBA1C, C_JOINT, C_NFGLU, C_FGLU, H5REL4)  %>% #biomarkers wave 5
+         C_MED, C_HBA1C, C_JOINT, C_NFGLU, C_FGLU, H5REL4, Plate, AvgCorrelogram100)  %>% #biomarkers wave 5 and #quality control varialbes
+ 
   #handling missing data
   replace_with_na_at(.vars = c("H1GH59A","H1GH59B", "H3HGT_F","H3HGT_I", "H2WS16HF", "H2WS16HI", "PC19A_P", "PC19B_O"),
                      ~.x %in% c(96:99)) %>%
@@ -710,7 +711,7 @@ waves_wenjia =
                       nh==0 & (ra==1|ra==4) ~3, #asian nonhispanic
                       nh==0 & rw!=1 & rb!=1 & rb!=2 & ra!=4 & ra!=1 ~4, #other nonhispanic
                       nh==1 ~5))%>% #hispanic
-  dummy_cols(select_columns =c( "re", "Plate"))%>%
+  dummy_cols(select_columns =c( "re"))%>%
   left_join(PGS[,c("AID", "PGSBMI")], by="AID")
 
 
@@ -1049,7 +1050,7 @@ waves_wenjia=waves_wenjia%>%left_join(friends_bmi[c("AID","friends_num","avgbmi"
   left_join(select(w5substanceuse,AID, bingedrink_year, bingedrink_month, calchohol), by="AID")%>%
   left_join(select(waves_pses, AID, poccrm_w12,poccrf_w12,pfoodstamp,ppublicassit,
                    chealthinsurance,chealthinsurance_everlost, phard_healthinsurance,peversmoke,cpreterm), by="AID") %>% 
-  left_join(waves_longarm_M,by="AID")
+  left_join(waves_longarm_M,by="AID") 
 ######################################################## put new variables in to waves and make some of them dummy
 
 
@@ -1065,7 +1066,7 @@ waves_wenjia=waves_wenjia%>%left_join(friends_bmi[c("AID","friends_num","avgbmi"
 
 waves=waves%>%left_join(waves_wenjia, by="AID")%>%
   left_join(select(waves_laura, -starts_with(match = "H5")),by="AID")%>%
-  dummy_cols(select_columns =c( "edu_max", "sex_interv", "obesityclass", "w5occupgroup","W5REGION","bingedrink_year","bingedrink_month"))
+  dummy_cols(select_columns =c( "edu_max", "sex_interv", "obesityclass", "w5occupgroup","W5REGION","bingedrink_year","bingedrink_month","Plate"))
 
 
 
