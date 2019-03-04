@@ -57,6 +57,25 @@ attr_qual <- quality %>%
   right_join(ID_both, attr_qual, by = "VialID")
 
 ###########
+########################################################region information at all waves
+wave1_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Weight Files/Weight Components/w1homewc.xpt")%>% 
+  as_tibble %>% 
+  transmute(AID=AID,W1REGION=REGION)
+wave2_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Weight Files/Weight Components/w2homewc.xpt")%>%
+  as_tibble %>% 
+  transmute(AID=AID,W2REGION=REGION)
+wave3_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Contextual Files/Census Region - Wave III/w3region.xpt")%>% as_tibble
+wave4_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Contextual Files/Census Region - Wave IV/w4region.xpt")%>% as_tibble
+wave5_region<- read.xport("/Volumes/Data/Addhealth/Addhealthdata/wave5//Weights/wgtsw5s1.xpt") %>% as_tibble %>%transmute(AID=AID, W5REGION=REGION)
+
+waves_region=wave1_region %>% left_join(wave2_region, by = "AID") %>% left_join(wave3_region, by = "AID") %>% left_join(wave4_region, by = "AID")%>% 
+  left_join(wave5_region, by = "AID") %>% 
+  mutate_at(.vars = vars(starts_with("W")), .funs =(. %>% factor%>%fct_recode("NE" = "1", # northeast
+                                                                              "MW" = "2", #midwest
+                                                                              "S" = "3", #south
+                                                                              "W"  = "4") ))    #west
+################
+
 waves = 
   wave1 %>%
   left_join(wave2, by = "AID") %>%
@@ -66,7 +85,8 @@ waves =
   left_join(w1_context, by = "AID") %>% 
   left_join(w4_constructed, by = "AID") %>% 
   left_join(glucose, by="AID") %>% 
-  left_join(attr_qual, by="AID")
+  left_join(attr_qual, by="AID") %>% 
+  left_join(waves_region)
 
 
 waves_full = waves # full copy, waves will be trimmed below
@@ -681,7 +701,7 @@ waves_wenjia =
   select(AID, H1GI1Y, H1GI1M, H2GI1Y, H2GI1M, H3OD1Y, H3OD1M, H4OD1Y, H4OD1M, H5OD1Y, H5OD1M,
          IYEAR, IMONTH, IYEAR2, IMONTH2, IYEAR3, IMONTH3, IYEAR4, IMONTH4, IYEAR5, IMONTH5,
          H1GI4, H3OD2, H5OD4C, H1GI6A, H3OD4A, H5OD4A, H1GI6B, H3OD4B, H5OD4B, H1GI6D,H3OD4D,
-         H5OD4D, H1GI9, H3IR4,H4IR4)%>%
+         H5OD4D, H1GI9, H3IR4,H4IR4, W1REGION,W2REGION,W3REGION,W4REGION,W5REGION)%>% ###add region information for create variable for people in south
   #set birth month and year to na when the response refused to provide
   replace_with_na_at(c("H1GI1Y", "H1GI1M","H2GI1Y","H2GI1M"), ~.x%in% c("96", "98"))%>%
   replace_with_na_at(.vars = c("H1GI4","H3OD2","H5OD4C","H1GI6A", "H3OD4A","H5OD4A", "H1GI6B", "H3OD4B","H5OD4B",
@@ -689,6 +709,19 @@ waves_wenjia =
   #replace na value in wave 1 with information in w2 or w3 w4 or w5
   mutate(BirthY=coalesce(as.integer(H1GI1Y),as.integer(H2GI1Y),as.integer(H3OD1Y),as.integer(H4OD1Y),as.integer(H5OD1Y)),
          BirthM=coalesce(as.integer(H1GI1M),as.integer(H2GI1M),as.integer(H3OD1M),as.integer(H4OD1M),as.integer(H5OD1M)),
+         birth_month=ifelse(BirthM %in%c(1,2,3,12),1,0) %>% as.factor, #variable to indicate birth in winter
+         data_month1=ifelse(IMONTH %in%c(1,2,3,12),1,0) %>% as.factor, #variable to indicate data collected in winter
+         data_month2=ifelse(IMONTH2 %in%c(1,2,3,12),1,0) %>% as.factor,
+         data_month3=ifelse(IMONTH3 %in%c(1,2,3,12),1,0) %>% as.factor,
+         data_month4=ifelse(IMONTH4 %in%c(1,2,3,12),1,0) %>% as.factor,
+         data_month5=ifelse(IMONTH5 %in%c(1,2,3,12),1,0) %>% as.factor,
+         
+         birth_month_south=ifelse(BirthM %in%c(1,2,3,12) &W1REGION!="S",1,0) %>% as.factor, #variable to indicate birth in winter people in south
+         data_month1_south=ifelse(IMONTH %in%c(1,2,3,12)&W1REGION!="S",1,0) %>% as.factor, #variable to indicate data collected in winter
+         data_month2_south=ifelse(IMONTH2 %in%c(1,2,3,12)&W2REGION!="S",1,0) %>% as.factor,
+         data_month3_south=ifelse(IMONTH3 %in%c(1,2,3,12)&W3REGION!="S",1,0) %>% as.factor,
+         data_month4_south=ifelse(IMONTH4 %in%c(1,2,3,12)&W4REGION!="S",1,0) %>% as.factor,
+         data_month5_south=ifelse(IMONTH5 %in%c(1,2,3,12)&W5REGION!="S",1,0) %>% as.factor,
          # reformate the time for conducting each wave xxxx-xx-xx(y-m-d)
          date_w1=paste(IYEAR, IMONTH,"1", sep = "-"),
          date_w2=paste(IYEAR2, IMONTH2,"1", sep = "-"),
@@ -757,15 +790,8 @@ waves_weight=waves_full%>%select(AID, BIO_SEX, PC19B_O, PC19A_P, H5LIFE1L, H5LIF
            is.na(birthweight_new) & (H5LIFE2==1|H5LIFE2==0) ~ H5LIFE2 #for birthweigh na case, use seflreport lowbirthweight information
          ))
 
-########################################################region information at wave3 and wave4 wave5
 
-wave3_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Contextual Files/Census Region - Wave III/w3region.xpt")%>% as_tibble
-wave4_region = read.xport("/Volumes/Data/addhealth/addhealthdata/waves_1_4/Contextual Files/Census Region - Wave IV/w4region.xpt")%>% as_tibble
-wave5_region<- read.xport("/Volumes/Data/Addhealth/Addhealthdata/wave5//Weights/wgtsw5s1.xpt") %>% as_tibble
-wave5_region=wave5_region%>%transmute(AID=AID, W5REGION=REGION%>%factor%>%fct_recode("NE" = "1", # northeast
-                                                                                     "MW" = "2", #midwest
-                                                                                     "S" = "3", #south
-                                                                                     "W"  = "4") )    #west
+
 
 ########################################################wave5 occupation
 # SEI_occ10=readRDS("/Volumes/Share/SEI_occ10.rds")
@@ -1037,20 +1063,95 @@ waves_longarm_M=waves_full%>%
             
   ) %>% select(-starts_with("t"))
 
+#################### birth order, number of big siblings, breast feeding time
+
+waves_birthorder =  
+  waves_full %>% 
+  select(AID, H1HR14, H1HR15, matches("H1HR3[A-T]"), matches("H1HR5[A-T]"),matches("H1HR7[A-T]")) %>% 
+  left_join(waves_wenjia %>% select(AID,age_w1)) %>% 
+  replace_with_na_all(~.x %in% c(996,997,998,999)) %>% 
+  mutate(
+    birth_order_f1=case_when(H1HR14==1 ~ "single", #how many children biological parents have
+                             H1HR15==1 ~ "1st",
+                             H1HR15==2 ~ "2nd",
+                             H1HR15==3 ~ "3rd",
+                             H1HR15==4 ~ "4th",
+                             H1HR15==5 ~ "5th",
+                             H1HR15==6 ~ "6th",
+                             H1HR15==7 ~ "7th",
+                             H1HR15==8 ~ "8th",
+                             H1HR15==9 ~ "9th",
+                             H1HR15==10 ~ "10th",
+                             H1HR15==11 ~ "11th",
+                             H1HR15==12 ~ "12th",
+                             H1HR15==13 ~ "13th",
+                             H1HR15==14 ~ "14th",
+                             H1HR15==15 ~ "15th") %>% as.factor)
+
+waves_birthorder_temp =  
+  waves_birthorder %>%  
+  gather(H1HR3A:H1HR7T, key= key, value = value) %>% 
+  separate(key, sep = -1, into = c("var", "num")) %>% 
+  split(.$var) %>%
+  map(~mutate(., !!.$var[1] := paste0(var, num), !!paste0(.$var[1], "_values") := value)) %>%
+  map(~select(., -var, -value)) %>%
+  Reduce(f = merge, x = .) %>%
+  select(-num) %>% 
+  mutate(big_brothers_f1=case_when(H1HR14==1 | H1HR15==1 ~ 0, #single child; first child
+                                   H1HR3_values==5 & H1HR5_values==1 & H1HR7_values>age_w1 ~ 1, # +1 big brother
+                                   H1HR3_values==5 & H1HR5_values==1 & H1HR7_values<=age_w1 ~ 0, # no big brother
+                                   H1HR3_values==5 & H1HR5_values!=1 ~ 0, # not full brother
+                                   H1HR3_values<96 & H1HR3_values!=5 ~ 0
+                                   
+  ),
+  big_sisters_f1=case_when(H1HR14==1 | H1HR15==1 ~ 0, #single child; first child
+                           H1HR3_values==8 & H1HR5_values==7 & H1HR7_values>age_w1 ~ 1, # +1 big sis
+                           H1HR3_values==8 & H1HR5_values==7 & H1HR7_values<=age_w1 ~ 0, # no big sis
+                           H1HR3_values==8 & H1HR5_values!=7 ~ 0, # not full sis
+                           H1HR3_values<96 & H1HR3_values!=7 ~ 0
+                           
+                           
+                           
+  )
+  ) %>% 
+  group_by(AID)%>%summarise_at(.vars=c("big_brothers_f1","big_sisters_f1"), .funs=funs(sum(.[!is.na(.)]) ))
+
+
+waves_birthorder=waves_birthorder %>% left_join(waves_birthorder_temp) %>%  
+  mutate(big_sib=big_brothers_f1+big_sisters_f1) %>% 
+  left_join(waves_full %>% transmute(AID=AID,
+                                     breastfeed_time_fp1=PC20 %>% as.factor %>% fct_recode("less than 3 months"="1",
+                                                                                           "less than 6 months"="2",
+                                                                                           "less than 9 months"="3",
+                                                                                           "less than 12 months"="4",
+                                                                                           "less than 24 months"="5",
+                                                                                           "more than 24 months"="6",
+                                                                                           "not breastfed"="7",
+                                                                                           NULL="96",
+                                                                                           NULL="98")
+                                     )
+  )  %>% select(AID, birth_order_f1, big_brothers_f1,big_sisters_f1,big_sib,breastfeed_time_fp1)
+####################
 
 ######################################################## create waves_wenjia by combine all the newly created variables
 waves_wenjia=waves_wenjia%>%left_join(friends_bmi[c("AID","friends_num","avgbmi", "avgbmi_ff", "avgbmi_mf")], by= "AID")%>%
   left_join(obesityclass[c("AID", "obesityclass", "Prob_C1", "Prob_C2", "Prob_C3")], by= "AID")%>%
   left_join(waves_weight[c("AID", "birthweight_new", "lowbirthweight", "H4WAIST")], by="AID")%>%
-  left_join(wave3_region, by="AID")%>%
-  left_join(wave4_region, by="AID")%>%
-  left_join(wave5_region, by="AID")%>%
   left_join(select(w5occupation, AID, w5occupgroup, SEI_ff5), by="AID")%>%
   left_join(select(waves_pubertal,AID, w1pd, w2pd), by="AID")%>%
   left_join(select(w5substanceuse,AID, bingedrink_year, bingedrink_month, calchohol), by="AID")%>%
   left_join(select(waves_pses, AID, poccrm_w12,poccrf_w12,pfoodstamp,ppublicassit,
                    chealthinsurance,chealthinsurance_everlost, phard_healthinsurance,peversmoke,cpreterm), by="AID") %>% 
-  left_join(waves_longarm_M,by="AID") 
+  left_join(waves_longarm_M,by="AID") %>% 
+  left_join(waves_birthorder,by="AID")
+
+
+
+
+
+
+
+
 ######################################################## put new variables in to waves and make some of them dummy
 
 
