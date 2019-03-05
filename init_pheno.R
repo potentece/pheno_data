@@ -709,19 +709,19 @@ waves_wenjia =
   #replace na value in wave 1 with information in w2 or w3 w4 or w5
   mutate(BirthY=coalesce(as.integer(H1GI1Y),as.integer(H2GI1Y),as.integer(H3OD1Y),as.integer(H4OD1Y),as.integer(H5OD1Y)),
          BirthM=coalesce(as.integer(H1GI1M),as.integer(H2GI1M),as.integer(H3OD1M),as.integer(H4OD1M),as.integer(H5OD1M)),
-         birth_month=ifelse(BirthM %in%c(1,2,3,12),1,0) %>% as.factor, #variable to indicate birth in winter
-         data_month1=ifelse(IMONTH %in%c(1,2,3,12),1,0) %>% as.factor, #variable to indicate data collected in winter
-         data_month2=ifelse(IMONTH2 %in%c(1,2,3,12),1,0) %>% as.factor,
-         data_month3=ifelse(IMONTH3 %in%c(1,2,3,12),1,0) %>% as.factor,
-         data_month4=ifelse(IMONTH4 %in%c(1,2,3,12),1,0) %>% as.factor,
-         data_month5=ifelse(IMONTH5 %in%c(1,2,3,12),1,0) %>% as.factor,
+         birth_winter=ifelse(BirthM %in%c(1,2,3,12),1,0) %>% as.factor, #variable to indicate birth in winter
+         data_winter_w1=ifelse(IMONTH %in%c(1,2,3,12),1,0) %>% as.factor, #variable to indicate data collected in winter
+         data_winter_w2=ifelse(IMONTH2 %in%c(1,2,3,12),1,0) %>% as.factor,
+         data_winter_w3=ifelse(IMONTH3 %in%c(1,2,3,12),1,0) %>% as.factor,
+         data_winter_w4=ifelse(IMONTH4 %in%c(1,2,3,12),1,0) %>% as.factor,
+         data_winter_w5=ifelse(IMONTH5 %in%c(1,2,3,12),1,0) %>% as.factor,
          
-         birth_month_south=ifelse(BirthM %in%c(1,2,3,12) &W1REGION!="S",1,0) %>% as.factor, #variable to indicate birth in winter people in south
-         data_month1_south=ifelse(IMONTH %in%c(1,2,3,12)&W1REGION!="S",1,0) %>% as.factor, #variable to indicate data collected in winter
-         data_month2_south=ifelse(IMONTH2 %in%c(1,2,3,12)&W2REGION!="S",1,0) %>% as.factor,
-         data_month3_south=ifelse(IMONTH3 %in%c(1,2,3,12)&W3REGION!="S",1,0) %>% as.factor,
-         data_month4_south=ifelse(IMONTH4 %in%c(1,2,3,12)&W4REGION!="S",1,0) %>% as.factor,
-         data_month5_south=ifelse(IMONTH5 %in%c(1,2,3,12)&W5REGION!="S",1,0) %>% as.factor,
+         birth_winter_exclsouth=ifelse(BirthM %in%c(1,2,3,12) & W1REGION!="S",1,0) %>% as.factor, #variable to indicate birth in winter people in south
+         data_winter_w1_exclsouth=ifelse(IMONTH %in%c(1,2,3,12) & W1REGION!="S",1,0) %>% as.factor, #variable to indicate data collected in winter
+         data_winter_w2_exclsouth=ifelse(IMONTH2 %in%c(1,2,3,12) & W2REGION!="S",1,0) %>% as.factor,
+         data_winter_w3_exclsouth=ifelse(IMONTH3 %in%c(1,2,3,12) & W3REGION!="S",1,0) %>% as.factor,
+         data_winter_w4_exclsouth=ifelse(IMONTH4 %in%c(1,2,3,12) & W4REGION!="S",1,0) %>% as.factor,
+         data_winter_w5_exclsouth=ifelse(IMONTH5 %in%c(1,2,3,12) & W5REGION!="S",1,0) %>% as.factor,
          # reformate the time for conducting each wave xxxx-xx-xx(y-m-d)
          date_w1=paste(IYEAR, IMONTH,"1", sep = "-"),
          date_w2=paste(IYEAR2, IMONTH2,"1", sep = "-"),
@@ -1086,7 +1086,10 @@ waves_birthorder =
                              H1HR15==12 ~ "12th",
                              H1HR15==13 ~ "13th",
                              H1HR15==14 ~ "14th",
-                             H1HR15==15 ~ "15th") %>% as.factor)
+                             H1HR15==15 ~ "15th") %>% as.factor,
+    birth_order_aggregate_f1=fct_collapse(birth_order_f1, "single"="signle", "1st"="1st",
+                                          "2nd"="2nd", "3rd"="3rd", "4th"="4th",
+                                          "5th and more"=c("5th","6th","7th","8th","9th","10th","11th","12th","13th","14th","15th")))
 
 waves_birthorder_temp =  
   waves_birthorder %>%  
@@ -1120,15 +1123,22 @@ waves_birthorder_temp =
 waves_birthorder=waves_birthorder %>% left_join(waves_birthorder_temp) %>%  
   mutate(big_sib=big_brothers_f1+big_sisters_f1) %>% 
   left_join(waves_full %>% transmute(AID=AID,
-                                     breastfeed_time_fp1=PC20 %>% as.factor %>% fct_recode("less than 3 months"="1",
-                                                                                           "less than 6 months"="2",
-                                                                                           "less than 9 months"="3",
-                                                                                           "less than 12 months"="4",
-                                                                                           "less than 24 months"="5",
+                                     breastfeed_length_fp1=PC20 %>% as.factor %>% fct_recode("less than 3 months"="1",
+                                                                                           "3 to 6 months"="2",
+                                                                                           "6 to 9 months"="3",
+                                                                                           "9 to 12 months"="4",
+                                                                                           "12 to 24 months"="5",
                                                                                            "more than 24 months"="6",
                                                                                            "not breastfed"="7",
                                                                                            NULL="96",
-                                                                                           NULL="98")
+                                                                                           NULL="98"),
+                                     breastfeed_length_aggregate_fp1=fct_collapse(breastfeed_length_fp1, "less than 3 months"="less than 3 months",
+                                                                                  "3 to 6 months"="3 to 6 months",
+                                                                                  "6 to 9 months"="6 to 9 months",
+                                                                                  "9 to 12 months"="9 to 12 months",
+                                                                                  "more than 12 months"=c("12 to 24 months","more than 24 months"),
+                                                                                  "not breastfed"="not breastfed")   
+                                     
                                      )
   )  %>% select(AID, birth_order_f1, big_brothers_f1,big_sisters_f1,big_sib,breastfeed_time_fp1)
 ####################
