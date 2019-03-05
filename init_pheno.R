@@ -642,7 +642,7 @@ waves =
 waves_cecilia  =
   waves_full %>%
   select(AID, H1GH59A, H1GH59B, H1GH60, H2WS16W, H2WS16HF,
-         H2WS16HI, H3WGT, H3HGT_F, H3HGT_I, H4BMI, H5ID3, H5ID2F, H5ID2I, H5ID6D, H5ID6E, PC19A_P, PC19B_O,
+         H2WS16HI, H3WGT, H3HGT_F, H3HGT_I, H4BMI, H5ID3, H5ID2F, H5ID2I, H5ID6D, H5ID6E, H5ID6DM, H5ID6EM, PC19A_P, PC19B_O,
          C_MED, C_HBA1C, C_JOINT, C_NFGLU, C_FGLU, H5REL4, Plate, AvgCorrelogram100)  %>% #biomarkers wave 5 and #quality control varialbes
  
   #handling missing data
@@ -671,13 +671,24 @@ waves_cecilia  =
     obesew3 = as.numeric(w3bmi>=30),
     obesew1or2 = ifelse(!is.na(w1bmi), as.numeric(w1bmi>=30), as.numeric(w2bmi>=30)),
     w1or2bmi  = ifelse(!is.na(w1bmi), w1bmi, w2bmi),
+    #only overweight
+    overweightw5 = as.numeric(w5bmi>=25 & w5bmi<=30),
+    overweightw4 = as.numeric(w4bmi>=25 & w4bmi<=30),
+    overweightw3 = as.numeric(w3bmi>=25 & w3bmi<=30),
+    overweightw1or2 = ifelse(!is.na(w1bmi), as.numeric(w1bmi>=25 & w1bmi<=30), as.numeric(w2bmi>=25 & w2bmi<=30))
     
+    #overweight and obese
+    overw5 = as.numeric(w5bmi>=25),
+    overw4 = as.numeric(w4bmi>=25),
+    overw3 = as.numeric(w3bmi>=25),
+    overw1or2 = ifelse(!is.na(w1bmi), as.numeric(w1bmi>=25), as.numeric(w2bmi>=25))
+        
     #overweight at different waves
     overweight_ff5 = as.numeric(w5bmi>=25),
     
     # having or had diabetes and heart attack  
-    diabetes = H5ID6D,
-    heartatk = H5ID6E
+    diabetes = ifelse((H5ID6D==1 | H5ID6DM==1), 1, 0),
+    heartatk = ifelse((H5ID6E==1 | H5ID6EM==1), 1, 0)
   ) 
 
 
