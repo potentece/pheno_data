@@ -782,13 +782,21 @@ waves_weight=waves_full%>%select(AID, BIO_SEX, PC19B_O, PC19A_P, H5LIFE1L, H5LIF
          birthweight_new=case_when(
            !is.na(birthweight_O) & !is.na(birthweight_P) ~ birthweight_P+birthweight_O/16,
            is.na(birthweight_O) & !is.na(birthweight_P) ~ birthweight_P),
+         highbirthweight=case_when(
+           birthweight_new < 8.8 ~ 0,
+           birthweight_new >= 8.8 ~ 1, # birthweight high
+           birthweight_P == 9 ~ 1 # for 9 pound birthweight, if birth ounce information is avaiable 
+           ),
          lowbirthweight=case_when(
            birthweight_new > 5.5 ~ 0, # birthweight more than 5.5 definitely not lowbirthweight
            birthweight_P!=5 & birthweight_new <= 5.5 ~ 1, # birthweight 0-4 pounds definitely lowbirthweigh
            !is.na(birthweight_O) & birthweight_P==5 ~ 1, # for 5 pound birthweight, if birth ounce information is avaiable, then it is less than 5.5, so it is lowbirthweight 
            is.na(birthweight_O) & birthweight_P==5 ~ H5LIFE2,# for 5 pound birthweight, if birth ounce information is na, use selfreport info
            is.na(birthweight_new) & (H5LIFE2==1|H5LIFE2==0) ~ H5LIFE2 #for birthweigh na case, use seflreport lowbirthweight information
-         ))
+         ),
+         high_lowbirth= case_when( #either low or high birth weight
+           (lowbirthweight==1 | highbirthweight==1) ~ 1,
+           (lowbirthweight==0 | highbirthweight==0) ~ 0))
 
 
 
