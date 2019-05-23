@@ -1155,10 +1155,9 @@ waves_wenjia=waves_wenjia%>%left_join(friends_bmi[c("AID","friends_num","avgbmi"
   left_join(waves_longarm_M,by="AID") %>% 
   left_join(waves_birthorder,by="AID")
 
-
-
-
-
+########## derived variables (when using variables from multiple chuncks)
+waves_wenjia=waves_wenjia %>% mutate(
+age_w1orw2= ifelse(!is.na(w1bmi), age_w1, age_w2))
 
 
 
