@@ -159,8 +159,12 @@ waves =
             # psychological
             depression_ah = C4VAR044, # depression 
             stress_ah = C4VAR001, # Cohen Perceived Stress Scale
-            depression2_ah = C4VAR002# CESD Depression Scale
-  )   %>% 
+            depression2_ah = C4VAR002, # CESD Depression Scale
+            # cardiovascular health
+            hypertension1 = C4VAR045, #hypertension stage 1
+            hypertension2 = C4VAR046, #hypertension stage 2
+            cholesterol = C4VAR047 #High blood cholesterol or triglycerides or lipids
+  )   %>%  
   replace_with_na_all(~.x %in% c(94:99,9996, 999996, 9999997, 999998, 9999998)) %>%   # missing
   mutate(parent_income_categories = parent_income %>% ntile(5)) %>% # make quantile groups for comparability with childrens income
   left_join(select(waves_full,AID, H4LM18), by = "AID") %>%  # wave 4 occupatianal - income data: shawn
